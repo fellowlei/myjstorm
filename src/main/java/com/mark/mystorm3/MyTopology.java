@@ -35,7 +35,7 @@ public class MyTopology {
         localCluster.submitTopology(TOPOLOGY_NAME,conf,builder.createTopology());
 //        StormSubmitter.submitTopology(TOPOLOGY_NAME, conf,builder.createTopology());
 
-        Thread.sleep(20000);
+        Thread.sleep(1000 *60 * 5);
 
         localCluster.killTopology(TOPOLOGY_NAME);
     }

@@ -6,6 +6,7 @@ import backtype.storm.topology.IRichSpout;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
+import com.mark.jedis.JedisUtil;
 import com.mark.kafka.MyProducer;
 import com.mark.kafka.MyReceiver;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -14,6 +15,8 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import shade.storm.org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -30,11 +33,13 @@ public class MySpout implements IRichSpout {
 
     SpoutOutputCollector spoutOutputCollector;
     KafkaConsumer<String, String> consumer;
+    Jedis jedis;
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         this.spoutOutputCollector = spoutOutputCollector;
         consumer = MyReceiver.getConsumer();
         consumer.subscribe(Arrays.asList("input"));;
+        jedis = JedisUtil.getJedis();
     }
 
     @Override
@@ -61,16 +66,15 @@ public class MySpout implements IRichSpout {
 //            spoutOutputCollector.emit(new Values(msg));
 //            logger.info("send " + msg);
 //        }
-        String msg = "hello" + idGen.incrementAndGet();
-        while (true){
-            spoutOutputCollector.emit(new Values(msg));
-            logger.info("send " + msg);
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
+        String msg = jedis.lpop("queue");
+        if(StringUtils.isEmpty(msg)){
+            return;
         }
+//        String msg = "hello" + idGen.incrementAndGet();
+        spoutOutputCollector.emit(new Values(msg));
+        logger.info("spout send " + msg);
+
 
 
     }
