@@ -35,10 +35,10 @@ public class MyBolt implements IRichBolt {
     @Override
     public void execute(Tuple tuple) {
         String name = tuple.getString(0);
-        name = "bolt:" + name;
-//        producer.send(new ProducerRecord<String, String>("output",name));
-        jedis.rpush("queue2",name + "::bolt");
-        logger.info("bolt received:   " + name + ", send to kafka: " + name);
+        name =  name + "::bolt";
+        producer.send(new ProducerRecord<String, String>("queue2",name));
+//        jedis.rpush("queue2",name + "::bolt");
+        logger.info("bolt received: " + name + ", send to kafka: " + name);
     }
 
     @Override

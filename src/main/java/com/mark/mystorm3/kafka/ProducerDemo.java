@@ -23,8 +23,9 @@ public class ProducerDemo {
 
         Producer<String, String> producer = new KafkaProducer<String, String>(props);
         for (int i = 0; i < 10000; i++){
-            producer.send(new ProducerRecord<String, String>("input", Integer.toString(i), Integer.toString(i)));
-            System.out.println("semd2 " + i);
+            String msg = "mq::" + i;
+            producer.send(new ProducerRecord<String, String>("queue", Integer.toString(i), msg));
+            System.out.println("send " + msg);
             Thread.sleep(100);
         }
 

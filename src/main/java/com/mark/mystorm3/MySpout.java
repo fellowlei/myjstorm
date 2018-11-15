@@ -13,6 +13,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.utils.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -38,7 +39,7 @@ public class MySpout implements IRichSpout {
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         this.spoutOutputCollector = spoutOutputCollector;
         consumer = MyReceiver.getConsumer();
-        consumer.subscribe(Arrays.asList("input"));;
+        consumer.subscribe(Arrays.asList("queue"));;
         jedis = JedisUtil.getJedis();
     }
 
@@ -59,7 +60,15 @@ public class MySpout implements IRichSpout {
 
     @Override
     public void nextTuple() {
-//        ConsumerRecords<String, String> consumerRecords = consumer.poll(1000);
+        ConsumerRecords<String, String> consumerRecords = consumer.poll(1000);
+        if(consumerRecords == null || consumerRecords.isEmpty()){
+            return;
+        }
+        for (ConsumerRecord<String, String> consumerRecord : consumerRecords) {
+            String msg = consumerRecord.value();
+            spoutOutputCollector.emit(new Values(msg));
+            logger.info("spout send " + msg);
+        }
 //        Iterator<ConsumerRecord<String, String>> iterator = consumerRecords.iterator();
 //        while(iterator.hasNext()){
 //            String msg = iterator.next().value();
@@ -67,13 +76,13 @@ public class MySpout implements IRichSpout {
 //            logger.info("send " + msg);
 //        }
 
-        String msg = jedis.lpop("queue");
-        if(StringUtils.isEmpty(msg)){
-            return;
-        }
+//        String msg = jedis.lpop("queue");
+//        if(StringUtils.isEmpty(msg)){
+//            return;
+//        }
 //        String msg = "hello" + idGen.incrementAndGet();
-        spoutOutputCollector.emit(new Values(msg));
-        logger.info("spout send " + msg);
+//        spoutOutputCollector.emit(new Values(msg));
+//        logger.info("spout send " + msg);
 
 
 
